@@ -4252,6 +4252,10 @@ func (vm *VM) adodbValueToVMValue(v any) Value {
 	case bool:
 		return NewBool(val)
 	case time.Time:
+		if val.Location() == time.UTC {
+			// Zone-less SQL types (datetime, datetime2, date) arrive as UTC; keep their wall clock.
+			val = time.Date(val.Year(), val.Month(), val.Day(), val.Hour(), val.Minute(), val.Second(), val.Nanosecond(), time.Local)
+		}
 		return NewDate(val)
 	case []byte:
 		return NewString(string(val))
@@ -4307,7 +4311,9 @@ func (vm *VM) adodbDriverValue(v Value) any {
 	case VTString:
 		return v.Str
 	case VTDate:
-		return time.Unix(0, v.Num).UTC()
+		// VBScript dates are zone-less wall-clock values: send the local wall clock unshifted.
+		t := time.Unix(0, v.Num).In(time.Local)
+		return time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), time.UTC)
 	default:
 		return v.String()
 	}
