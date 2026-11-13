@@ -2503,11 +2503,16 @@ func (vm *VM) adodbCommandExecute(cmd *adodbCommand, args []Value) Value {
 		params[i] = p.value
 	}
 
+	commandText := cmd.commandText
+	if cmd.commandType == 4 && strings.EqualFold(conn.dbDriver, "mssql") {
+		// adCmdStoredProc: ADO builds the call from the procedure name and the appended parameters.
+		commandText = strings.TrimSpace("EXEC " + commandText + " " + strings.TrimSuffix(strings.Repeat("?, ", len(params)), ", "))
+	}
 	if len(params) == 0 {
-		return vm.adodbConnectionExecute(conn, []Value{NewString(cmd.commandText)})
+		return vm.adodbConnectionExecute(conn, []Value{NewString(commandText)})
 	}
 	return vm.adodbConnectionExecute(conn, []Value{
-		NewString(cmd.commandText),
+		NewString(commandText),
 		ValueFromVBArray(NewVBArrayFromValues(0, params)),
 	})
 }
