@@ -602,7 +602,9 @@ func (vm *VM) adodbConnectionOpen(conn *adodbConnection) {
 			}
 		}
 		if err != nil {
-			dbConn.Close()
+			if dbConn != nil { // nil when the pooled retry's db.Conn failed
+				dbConn.Close()
+			}
 			err = fmt.Errorf("ping failed: %w", err)
 		}
 	} else {
