@@ -7056,16 +7056,8 @@ func (vm *VM) dispatchNativeCall(objID int64, member string, args []Value) Value
 			return NewString("")
 		case strings.EqualFold(member, "MapPath"):
 			if len(args) >= 1 {
-				path := args[0].String()
-				if !filepath.IsAbs(path) && !strings.HasPrefix(path, "/") && !strings.HasPrefix(path, "\\") {
-					if sourceFile, _ := vm.mappedCurrentLocation(); strings.TrimSpace(sourceFile) != "" {
-						virtualSource := server.VirtualPathFromAbsolutePath(sourceFile)
-						if virtualSource != "" {
-							path = filepath.ToSlash(filepath.Join(filepath.Dir(virtualSource), path))
-						}
-					}
-				}
-				return NewString(server.MapPath(path))
+				// IIS resolves a relative path against the requesting page, even from an included file.
+				return NewString(server.MapPath(args[0].String()))
 			}
 			return NewString(server.MapPath(""))
 		case strings.EqualFold(member, "IsClientConnected"):
