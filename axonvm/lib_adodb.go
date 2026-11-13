@@ -2450,6 +2450,9 @@ func (vm *VM) dispatchADODBCommandPropertyGet(cmd *adodbCommand, member string) 
 		return NewBool(cmd.prepared)
 	case strings.EqualFold(member, "Parameters"):
 		return vm.newADODBParametersCollection(cmd)
+	case strings.EqualFold(member, "Execute"):
+		// VBScript calls a no-argument method without parentheses: Set rs = cmd.Execute
+		return vm.adodbCommandExecute(cmd, nil)
 	}
 	return Value{Type: VTEmpty}
 }
